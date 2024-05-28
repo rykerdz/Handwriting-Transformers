@@ -431,6 +431,61 @@ class TRGAN(nn.Module):
 
 
         return self.real_base, self.fake_base
+    
+    
+    def _generate_pages_each(self, ST, SLEN, eval_text_encode = None, eval_len_text = None):
+
+        if eval_text_encode == None:
+            eval_text_encode = self.eval_text_encode
+        if eval_len_text == None:
+            eval_len_text = self.eval_len_text
+
+
+        self.fakes = self.netG.Eval(ST, eval_text_encode)
+
+        pages = []
+
+        for batch_idx in range(self.batch_size):
+       
+            word_t = []
+            word_l = []
+
+            gap = np.ones([IMG_HEIGHT,16])
+
+            line_wids = []
+
+            sdata_ = [i.unsqueeze(1) for i in torch.unbind(ST, 1)]
+
+            for idx, st in enumerate((sdata_)):
+
+                word_t.append((st[batch_idx,0,:,:int(SLEN.cpu().numpy()[batch_idx][idx])].cpu().numpy()+1)/2)
+
+                word_t.append(gap)
+
+                if len(word_t) == 16 or idx == len(sdata_) - 1:
+
+                    line_ = np.concatenate(word_t, -1)
+
+                    word_l.append(line_)
+                    line_wids.append(line_.shape[1])
+
+                    word_t = []
+
+
+            
+
+            for l in word_l:
+
+                pages.append(l)
+
+
+            #page = np.concatenate([page2, page1], 1)
+
+
+
+
+        return pages
+    
 
     def _generate_page(self, ST, SLEN, eval_text_encode = None, eval_len_text = None):
 
